@@ -1,0 +1,889 @@
+import pygame
+import random
+import time
+import tkinter as tk
+import os
+class Five:
+    def __init__(self):
+        self.reved=0
+        self.bools=True
+        self.a=self.init()
+    def init(self):
+        self.mode=''
+        pygame.init()
+        self.choice_mode=tk.Tk()
+        self.b1=tk.Button(self.choice_mode,text='you vs ai',command=self.ai_mo)
+        self.b2=tk.Button(self.choice_mode,text='left hand vs right hand',command=self.hand_mo)
+        self.b3=tk.Button(self.choice_mode,text='review',command=self.rev)
+        self.b3.pack()
+        self.b1.pack()
+        self.b2.pack()
+        self.choice_mode.mainloop()
+
+        self.border_on=False
+        if self.mode=='rev':
+            self.withdraw=False
+            self.running=True
+        elif self.mode=='ai' or self.mode=='hand':
+            self.running=True
+        else:
+            self.running=False
+            self.bools=False
+
+        return(self.bools)
+
+
+        #361 19*19
+    def rev(self):
+        self.reved+=1
+        if self.reved%2==1:
+            self.__list_=[]
+
+            self.rev_files=os.listdir('recs')
+
+            self.recnum=len(self.rev_files)
+            if self.recnum>0:
+                global filename
+                for x,filename in enumerate(self.rev_files):
+
+                    locals()[f'self.but{x}']=tk.Button(self.choice_mode,text=filename,command = lambda arg=filename:self.reviewthis(arg))
+                    locals()[f'self.but{x}'].pack()
+                    self.__list_.append(locals()[f'self.but{x}'])
+        else:
+
+            for x in self.__list_:
+                x.pack_forget()
+    def reviewthis(self,filename):
+
+        with open('recs/'+filename,'r') as f:
+            self.rev_point_list=eval(f.read())
+            self.reved+=1
+
+
+
+        self.choice_mode.destroy()
+        self.mode='rev'
+
+    def ai_mo(self):
+        self.mode='ai'
+        self.choice_mode.destroy()
+
+    def hand_mo(self):
+        self.mode='hand'
+        self.choice_mode.destroy()
+
+    def run_(self):
+
+
+        self.num=0
+        self.indone=False
+
+
+        if self.running==True:
+
+            self.saveex=False
+            self.screen = pygame.display.set_mode((740,740))
+
+            self.screen_w = self.screen.get_rect().width
+            self.screen.fill([218,165,32])
+            self.screen_h = self.screen.get_rect().height
+            self.baord_rect = pygame.Rect(0,0,740,740)
+            self.baord = pygame.draw.rect(self.screen,[255,222,173],self.baord_rect,100)
+            self.x,self.s,self.baord_h, self.baord_w = self.baord_rect
+            self.s = []
+            self.t = []
+            self.points = []
+            self.point_list = []
+            self.mouse_pos = pygame.mouse.get_pos()
+            self.round = 1
+            self.init_ = 0
+            self.draws = []
+            self.crowd =[]
+            self.seed_size=12
+            self.dec_w = ''
+            #self.mode="ai"
+            self.withdraw = True
+            try:
+                pygame.mixer.music.load('down.mp3')
+                pygame.mixer.music.play()
+                global loaded_sound
+                loaded_sound=True
+            except:
+
+                loaded_sound=False
+            self.re = []
+            self.ai_def_att_mode=[1,2]
+            self.win_color=[250,250,0]
+
+            self.directions_=[1,-1,+20,-20,+21,-21,+22,-22]
+
+            self.save_button_pos_and_size=[self.screen_w/2-30,self.screen_h/2-20,60,40]
+            self.draw_lines()
+
+        while self.running == True:
+
+            if self.check_event():
+                pygame.display.flip()
+                if self.withdraw==True and self.mode=="ai":
+
+                    self.ai_turn()
+            pygame.display.flip()
+        pygame.quit()
+
+        self.a=self.init()
+
+
+
+
+    def draw_lines(self):
+
+        hor_line = 21
+        ver_line = 21
+        for x in list(range(hor_line)):
+            w = pygame.draw.rect(self.screen,[255,255,255],[100,70+x*30,self.baord_w-200,1],0)
+            if self.init_ == 0:
+                self.s.append(70+x*30)
+
+        for x in list(range(ver_line)):
+            w = pygame.draw.rect(self.screen,[255,255,255],[70+x*30,100,1,self.baord_h-200],0)
+            if self.init_==0:
+                self.t.append(70+x*30)
+
+
+        if self.init_ == 0:
+            for t in self.t:
+                for s in self.s:
+                    self.points.append([[s,t],0])
+            for x in range(0,200):
+                self.points.append([[1000,1000],0])
+
+
+
+
+
+
+
+
+
+        self.init_ = 1
+
+
+        pygame.draw.circle(self.screen,[0,0,0],[550, 190],3,0)
+        pygame.draw.circle(self.screen,[0,0,0],[550,550],3,0)
+        pygame.draw.circle(self.screen,[0,0,0],[190,550],3,0)
+        pygame.draw.circle(self.screen,[0,0,0],[190,190],3,0)
+        pygame.draw.circle(self.screen,[0,0,0],[self.screen_h/2, self.screen_w/2],3,0)
+        pygame.draw.circle(self.screen,[0,0,0],[370,190],3,0)
+        pygame.draw.circle(self.screen,[0,0,0],[370,550],3,0)
+        pygame.draw.circle(self.screen,[0,0,0],[550,370],3,0)
+        pygame.draw.circle(self.screen,[0,0,0],[190,370],3,0)
+    def border_clear(self):
+        for x in self.points[21::21]:
+            x[1]=0
+        for x in self.points[:22]:
+            x[1]=0
+        for x in self.points[41::21]:
+            x[1]=0
+        for x in self.points[-221:-200]:
+            x[1]=0
+        self.border_on=False
+
+    def draw_seed(self):
+
+        for d in self.point_list:
+            pygame.draw.circle(d[0],d[1],d[2],d[3],d[4])
+        try:
+            pygame.draw.circle(self.screen,[225,20,50],self.point_list[-1][2],5,1)
+
+        except:
+            pass
+        #                                                radius,fill or line thickness
+    '''def draw_white(self):
+        pygmae.draw.rect(self.screen,[0,255,0],[100,10],5,0)
+        pygame.mixer.music.play()'''
+    def border(self,mode):
+        mode=mode*-1+3
+
+
+
+
+        for x in self.points[21::21]:
+            x[1]=mode*-1+3
+        for x in self.points[:22]:
+            x[1]=mode*-1+3
+        for x in self.points[41::21]:
+            x[1]=mode*-1+3
+        for x in self.points[-221:-200]:
+            x[1]=mode*-1+3
+        self.border_on=True
+
+
+        #for x in self.points[23:200]:
+
+
+
+
+    def check_event(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_BACKSPACE:
+
+                    if self.withdraw == True:
+
+                        self.withdraw_()
+
+
+                    else:
+                        print('withdraw forbiden')
+                if event.key==pygame.K_q and self.mode == 'ai':
+                    print('you quitted one step')
+                    self.point_list.append([self.screen,[0,0,0],[1000,1000],self.seed_size,0])
+                    self.re.append([[1000,1000],0])
+                    self.draws.append([[1000,1000],0])
+                    return True
+
+
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+
+
+                self.mouse_pos = pygame.mouse.get_pos()
+                if abs(self.mouse_pos[0]-self.screen_w/2)<30 and abs(self.mouse_pos[1]-self.screen_h/2)<20 and self.saveex==True:
+
+
+                    self.recording={'r':self.point_list}
+                    self.formatted_time = time.strftime("%Y_%m_%d_%H_%M_%S")
+
+                    with open('recs/'+self.formatted_time+'.txt','w') as f:
+                        self.list_of_recs=[]
+                        for x in self.point_list:
+                            self.list_of_recs.append(x[1:])
+                        #self.list_of_recs)
+                        f.write(f'{self.list_of_recs}')
+                    self.running=False
+
+
+                if self.mode=='rev':
+                    self.withdraw=False
+
+
+
+
+                    if event.button==1:
+
+                        if self.num==0 and self.indone==False:
+                            for x in self.rev_point_list[:]:
+                                if x[-2]==9:
+                                    self.rev_point_list.remove(x)
+                                x.insert(0,self.screen)
+                            self.indone=True
+
+
+                        if len(self.rev_point_list)>self.num:
+
+                            self.point_list.append(self.rev_point_list[self.num])
+                            self.num+=1
+
+                            self.draw_seed()
+                            pygame.mixer.music.play()
+
+                    elif event.button==3:
+                        if len(self.point_list)>0:
+
+                            self.point_list.remove(self.point_list[-1])
+                            self.num=len(self.point_list)
+
+                            self.screen.fill([218,165,32])
+                            self.baord = pygame.draw.rect(self.screen,[255,222,173],self.baord_rect,100)
+                            self.draw_lines()
+                            self.draw_seed()
+
+                else:
+                    for points in self.points:
+                        if points[0][0]<90 or points[0][0]>650 or points[0][1]<90 or points[0][1]>650:
+                            pass
+
+
+                        elif 7 >= abs(self.mouse_pos[0] - points[0][0]) and 7 >= abs(self.mouse_pos[1]-points[0][1]) and points[1] == 0 and self.withdraw==True:
+
+                        ##self.points)
+                            zz = str(points)
+                            sss = eval(zz)
+                            self.draws.append(sss)
+
+
+
+                            if self.round == 1 or self.mode=="ai":
+                                p = [self.screen,[50,50,50],[points[0][0],points[0][1]],self.seed_size,0]
+                                self.round = 0
+                                points[-1] = 1
+
+
+
+                            elif self.mode!="ai":
+                                p = [self.screen,[225,235,240],[points[0][0],points[0][1]],self.seed_size,0]
+                                self.round = 1
+                                points[-1] = 2
+
+                            self.point_list.append(p)
+
+                            self.draw_seed()
+                            if loaded_sound:
+
+                                pygame.mixer.music.play()
+
+                            self.re.append(points)
+
+                            try:
+                                self.judge()
+                            except:
+                                pass
+
+                            return True
+    def count_one_more(self):
+        pplist=[]
+
+        jz = -1
+
+        for points in self.points[:-200]:
+
+            jz +=1
+            ppp=0
+
+            for mode in self.ai_def_att_mode[:2]:
+                at_pp=0
+                de_pp=0
+                threat_three=0
+                if mode==2:
+                    atad=0.5
+                else:
+                    atad=2
+                pppp=0
+                if points[1]==0:
+
+                    points[1] =mode
+
+
+                    for dire in self.directions_:
+                        this_dire=0
+
+
+
+                        #first level
+
+
+                        #fo1 d
+                        if self.points[jz + dire][1] ==mode and abs(self.points[jz][0][0]-self.points[jz+dire][0][0])<=30:
+                            pppp+=100*atad
+                            #be1-2
+                            #gensit ./.
+                            if self.points[jz +dire*-1][1]==mode and abs(self.points[jz][0][0]-self.points[jz+dire*-1][0][0])<=30:
+                                pppp+=2000*atad
+                                if this_dire==0:
+
+                                    threat_three+=1
+                                    this_dire+=1
+
+
+                                # 0./. or ./.0
+                                if [self.points[jz +dire*-2][1]==mode*-1+3 and abs(self.points[jz+dire*-2][0][0]-self.points[jz+dire*-1][0][0])<=30] or [self.points[jz +dire*2][1]==mode*-1+3 and abs(self.points[jz+dire][0][0]-self.points[jz+dire*2][0][0])<=30]:
+                                    pppp-=940*atad
+                                    threat_three-=1
+                                    this_dire-=1
+
+
+                                #gensit ../.
+                                '''if self.points[jz +dire*-2][1]==mode and self.points[jz +dire*-2][1]==mode:
+                                    pppp+=100000*atad
+                                    # 0../. or ../.0
+                                    if self.points[jz +dire*-3][1]==mode*-1+3 or self.points[jz +dire*2][1]==mode*-1+3:
+                                        pppp-=99000*atad'''
+                            #gensit _/.
+                            if self.points[jz +dire*-1][1]==0 and abs(self.points[jz][0][0]-self.points[jz+dire*-1][0][0])<=30:
+                                pppp+=60*atad
+                                # ._/.
+                                if self.points[jz +dire*-2][1]==mode and abs(self.points[jz+dire*-1][0][0]-self.points[jz+dire*-2][0][0])<=30:
+                                    pppp+=600*atad
+                                    if this_dire==0:
+
+                                        threat_three+=1
+                                        this_dire+=1
+                                    if self.points[jz+dire*-3][1]==mode*-1+3 or self.points[jz+dire*2][1]==mode*-1+3:
+                                        pppp-=250
+                                        threat_three-=1
+                                        this_dire-=1
+                                if self.points[jz+dire*2][1]==0 and self.points[jz+dire*3][1]==mode:
+                                    pppp+=2000
+                                    if this_dire==0:
+                                        threat_three+=1
+                                        this_dire+=1
+                                    if mode and self.points[jz+dire*4][1]==mode*-1+3:
+                                        pppp-=1000
+                                        threat_three-=1
+                                        this_dire-=1
+                            #gensit 0/._ or _/.0
+                            if [self.points[jz +dire*-1][1]==mode*-1+3 and abs(self.points[jz][0][0]-self.points[jz+dire*-1][0][0])<=30] or [self.points[jz +dire*2][1]==mode*-1+3 and abs(self.points[jz+dire*2][0][0]-self.points[jz+dire][0][0])<=30]:
+                                pppp-=99*atad
+
+
+
+
+
+                            #fo2 d
+                            if self.points[jz + dire*2][1]==mode and abs(self.points[jz+dire][0][0]-self.points[jz+dire*2][0][0])<=30:
+                                pppp+=1000*atad
+                                #be1-2
+                                #gensit ./..
+                                if self.points[jz +dire*-1][1]==mode:
+                                    pppp+=100000*atad
+
+
+                                    #0./.._ or _./..0
+                                    if self.points[jz +dire*-2][1]==mode*-1+3 or self.points[jz +dire*3][1]==mode*-1+3:
+                                        pppp-=92000*atad
+                                    #gensit ../..
+                                    if self.points[jz +dire*-2][1]==mode:
+                                        pppp+=1000000*atad
+                                #gensit _/..
+                                if self.points[jz +dire*-1][1]==0:
+                                    pppp+=2000*atad
+                                    if this_dire==0:
+                                        threat_three+=1
+                                        this_dire+=1
+
+                                    # ._/..
+                                    if self.points[jz +dire*-2][1]==mode:
+                                        pppp+=5000*atad
+
+                                #gensit 0/.. or /..0
+                                if self.points[jz +dire*-1][1]==mode*-1+3 or self.points[jz + dire*3][1]==mode*-1+3:
+                                    pppp-=930*atad
+
+                                    threat_three-=1
+                                    this_dire-=1
+
+
+
+
+                                #fo3 d
+                                #gensit /...
+                                if self.points[jz +dire*3][1]==mode:
+                                    pppp+=100000*atad
+
+                                    #
+
+                                    #be1-2
+                                    #gensit ./...
+                                    if self.points[jz +dire*-1][1]==mode:
+                                        pppp+=10000000*atad
+                                    #0/...    or /...0
+                                    if self.points[jz +dire*-1][1]==mode*-1+3 or self.points[jz +dire*4][1]==mode*-1+3:
+                                        pppp-=99000*atad
+                                    #fo4 d
+                                    #gensit /....
+                                    if self.points[jz +dire*4][1]==mode:
+                                        pppp+=100000000*atad
+                        if self.points[jz+dire][1]==0:
+                            if self.points[jz+dire*2][1]==mode:
+                                pppp+=10*atad
+                                if self.points[jz+dire*3][1]==mode:
+                                    pppp+=1000*atad
+                                    if this_dire==0:
+                                        threat_three+=1
+                                        this_dire+=1
+                                    if self.points[jz+dire*4][1]==mode*-1+3 or self.points[jz+dire*-1][1]==mode*-1+3:
+                                        pppp-=700*atad
+
+                                        threat_three-=1
+                                        this_dire-=1
+                                        if self.points[jz+dire*4][1]==mode*-1+3 and self.points[jz+dire*-1][1]==mode*-1+3:
+                                            pppp-=310*atad
+
+                        #fo1 w
+                        if (self.points[jz +dire][1]==mode*-1+3 and self.points[jz +dire*-1][1]==mode*-1+3) or (self.points[jz +dire][1]==mode*-1+3 and self.points[jz +dire*-2][1]==mode*-1+3) or (self.points[jz +dire][1]==mode*-1+3 and self.points[jz +dire*-3][1]==mode*-1+3) or (self.points[jz +dire][1]==mode*-1+3 and self.points[jz +dire*-4][1]==mode*-1+3):
+                            pppp=0
+                        elif (self.points[jz +dire*2][1]==mode*-1+3 and self.points[jz +dire*-1][1]==mode*-1+3) or (self.points[jz +dire*2][1]==mode*-1+3 and self.points[jz +dire*-2][1]==mode*-1+3) or (self.points[jz +dire*2][1]==mode*-1+3 and self.points[jz +dire*-3][1]==mode*-1+3):
+                            pppp=0
+                        elif (self.points[jz +dire*3][1]==mode*-1+3 and self.points[jz +dire*-1][1]==mode*-1+3) or (self.points[jz +dire*3][1]==mode*-1+3 and self.points[jz +dire*-2][1]==mode*-1+3):
+                            pppp=0
+                        elif self.points[jz +dire*4][1]==mode*-1+3 and self.points[jz +dire*-1][1]==mode*-1+3:
+                            pppp=0
+
+
+                        ppp+=pppp
+
+                    #if self.points[jz+4][1] ==1 and points[0][1] == self.points[jz+1][0][1] and points[0][1] == self.points[jz+2][0][1] and points[0][1] == self.points[jz+3][0][1] and points[0][1] == self.points[jz+4][0][1]:
+                    points[1]=0
+                if mode==2:
+                    at_pp=pppp
+                    if threat_three>=2:
+                        at_pp+=threat_three*60000
+                        ##'this is threat three_a')
+                        ##threat_three)
+
+                else:
+                    de_pp=pppp
+                    if threat_three>=2:
+                        de_pp+=threat_three*60000
+                        ##'this is threat three_d')
+                        ##threat_three)
+
+            pplist.append([ppp,at_pp,de_pp])
+        retli_a=[]
+        retli_d=[]
+        for x in pplist:
+            if x[1] >= 20000:
+                retli_a.append(x[1])
+            if x[2]>=  20000:
+                retli_d.append(x[2])
+        return [retli_a,retli_d]
+
+
+    def ai_turn(self):
+
+        pplist=[]
+
+        self.jz = -1
+
+        for points in self.points[:-200]:
+
+            self.jz +=1
+            ppp=0
+
+            for mode in self.ai_def_att_mode[:2]:
+                self.border(mode*-1+3)
+                threat_three=0
+                if mode==2:
+                    atad=2.5
+                else:
+                    atad=0.5
+                if points[1]==0:
+
+                    points[1] =mode
+                    pppp=0
+
+                    for dire in self.directions_:
+                        this_dire=0
+
+
+
+                        #first level
+
+
+                        #fo1 d
+                        if self.points[self.jz + dire][1] ==mode and abs(self.points[self.jz][0][0]-self.points[self.jz+dire][0][0])<=30:
+                            pppp+=100*atad
+                            #be1-2
+                            #gensit ./.
+                            if self.points[self.jz +dire*-1][1]==mode and abs(self.points[self.jz][0][0]-self.points[self.jz+dire*-1][0][0])<=30:
+                                pppp+=2000*atad
+                                if this_dire==0:
+
+                                    threat_three+=1
+                                    this_dire+=1
+                                    #'./. +')
+                                if self.points[self.jz+dire*2][1]==mode:
+                                    pppp+=4000
+
+                                # 0./. or ./.0
+                                if [self.points[self.jz +dire*-2][1]==mode*-1+3 and abs(self.points[self.jz+dire*-2][0][0]-self.points[self.jz+dire*-1][0][0])<=30] or [self.points[self.jz +dire*2][1]==mode*-1+3 and abs(self.points[self.jz+dire][0][0]-self.points[self.jz+dire*2][0][0])<=30]:
+                                    pppp-=940*atad
+                                    threat_three-=1
+                                    this_dire-=1
+                                    #'./. -')
+
+
+
+                                #gensit ../.
+                                '''if self.points[self.jz +dire*-2][1]==mode and self.points[self.jz +dire*-2][1]==mode:
+                                    pppp+=100000*atad
+                                    # 0../. or ../.0
+                                    if self.points[self.jz +dire*-3][1]==mode*-1+3 or self.points[self.jz +dire*2][1]==mode*-1+3:
+                                        pppp-=99000*atad'''
+                            #gensit _/.
+                            if self.points[self.jz +dire*-1][1]==0 and abs(self.points[self.jz][0][0]-self.points[self.jz+dire*-1][0][0])<=30:
+                                pppp+=60*atad
+                                # ._/.
+                                if self.points[self.jz +dire*-2][1]==mode and abs(self.points[self.jz+dire*-1][0][0]-self.points[self.jz+dire*-2][0][0])<=30:
+                                    pppp+=500*atad
+                                    if this_dire==0:
+                                        #'._/. +')
+                                        threat_three+=1
+                                        this_dire+=1
+                                    if self.points[self.jz+dire*-3][1]==mode*-1+3 or self.points[self.jz+dire*2][1]==mode*-1+3:
+                                        pppp-=250
+                                        threat_three-=1
+                                        this_dire-=1
+                                        #'._/. -')
+                                if self.points[self.jz+dire*2][1]==0 and self.points[self.jz+dire*3][1]==mode:
+                                    pppp+=2000
+                                    if this_dire==0:
+                                        threat_three+=1
+                                        this_dire+=1
+                                    if mode and self.points[self.jz+dire*4][1]==mode*-1+3:
+                                        pppp-=1000
+                                        threat_three-=1
+                                        this_dire-=1
+                            #gensit 0/._ or _/.0
+                            if [self.points[self.jz +dire*-1][1]==mode*-1+3 and abs(self.points[self.jz][0][0]-self.points[self.jz+dire*-1][0][0])<=30] or [self.points[self.jz +dire*2][1]==mode*-1+3 and abs(self.points[self.jz+dire*2][0][0]-self.points[self.jz+dire][0][0])<=30]:
+                                pppp-=99*atad
+
+
+
+
+
+                            #fo2 d
+                            if self.points[self.jz + dire*2][1]==mode and abs(self.points[self.jz+dire][0][0]-self.points[self.jz+dire*2][0][0])<=30:
+                                pppp+=1000*atad
+                                if this_dire==0:
+                                    threat_three+=1
+
+                                    this_dire+=1
+                                    #'/.. +')
+                                #be1-2
+                                #gensit ./..
+                                if self.points[self.jz +dire*-1][1]==mode:
+                                    pppp+=300000*atad
+                                    if this_dire==0:
+                                        threat_three+=1
+                                        this_dire+=1
+
+                                    #0./.._ or _./..0
+                                    if self.points[self.jz +dire*-2][1]==mode*-1+3 or self.points[self.jz +dire*3][1]==mode*-1+3:
+                                        pppp-=299000*atad
+                                        threat_three-=1
+                                        this_dire-=1
+
+                                    #gensit ../..
+                                    if self.points[self.jz +dire*-2][1]==mode:
+                                        pppp+=1000000*atad
+                                #gensit _/..
+                                if self.points[self.jz +dire*-1][1]==0:
+                                    pppp+=2000*atad
+
+
+
+                                    # ._/..
+                                    if self.points[self.jz +dire*-2][1]==mode:
+                                        pppp+=5000*atad
+
+
+                                #gensit 0/.. or /..0
+                                if self.points[self.jz +dire*-1][1]==mode*-1+3 or self.points[self.jz + dire*3][1]==mode*-1+3:
+                                    pppp-=1930*atad
+                                    threat_three-=1
+                                    this_dire-=1
+                                    #'/.. -')
+
+
+
+
+
+                                #fo3 d
+                                #gensit /...
+                                if self.points[self.jz +dire*3][1]==mode:
+                                    pppp+=300000*atad
+                                    if this_dire==0:
+                                        threat_three+=1
+                                        this_dire+=1
+
+
+
+                                    #be1-2
+                                    #gensit ./...
+                                    if self.points[self.jz +dire*-1][1]==mode:
+                                        pppp+=10000000*atad
+                                    #0/...    or /...0
+                                    if self.points[self.jz +dire*-1][1]==mode*-1+3 or self.points[self.jz +dire*4][1]==mode*-1+3:
+                                        pppp-=299000*atad
+
+
+                                    #fo4 d
+                                    #gensit /....
+                                    if self.points[self.jz +dire*4][1]==mode:
+                                        pppp+=100000000*atad
+
+
+                        elif self.points[self.jz+dire][1]==0:
+                            if self.points[self.jz+dire*2][1]==mode:
+                                pppp+=10*atad
+                                if self.points[self.jz+dire*3][1]==mode:
+                                    pppp+=1000*atad
+                                    if this_dire==0:
+                                        threat_three+=1
+                                        this_dire+=1
+                                        #'/_.. +')
+
+                                    if self.points[self.jz+dire*4][1]==mode*-1+3 or self.points[self.jz+dire*-1][1]==mode*-1+3:
+                                        pppp-=700*atad
+
+                                        threat_three-=1
+                                        this_dire-=1
+                                        #'/_.. -')
+                                        if self.points[self.jz+dire*4][1]==mode*-1+3 and self.points[self.jz+dire*-1][1]==mode*-1+3:
+                                            pppp-=310*atad
+
+
+                        #fo1 w
+                        if (self.points[self.jz +dire][1]==mode*-1+3 and self.points[self.jz +dire*-1][1]==mode*-1+3) or (self.points[self.jz +dire][1]==mode*-1+3 and self.points[self.jz +dire*-2][1]==mode*-1+3) or (self.points[self.jz +dire][1]==mode*-1+3 and self.points[self.jz +dire*-3][1]==mode*-1+3) or (self.points[self.jz +dire][1]==mode*-1+3 and self.points[self.jz +dire*-4][1]==mode*-1+3):
+                            pppp=0
+                        elif (self.points[self.jz +dire*2][1]==mode*-1+3 and self.points[self.jz +dire*-1][1]==mode*-1+3) or (self.points[self.jz +dire*2][1]==mode*-1+3 and self.points[self.jz +dire*-2][1]==mode*-1+3) or (self.points[self.jz +dire*2][1]==mode*-1+3 and self.points[self.jz +dire*-3][1]==mode*-1+3):
+                            pppp=0
+                        elif (self.points[self.jz +dire*3][1]==mode*-1+3 and self.points[self.jz +dire*-1][1]==mode*-1+3) or (self.points[self.jz +dire*3][1]==mode*-1+3 and self.points[self.jz +dire*-2][1]==mode*-1+3):
+                            pppp=0
+                        elif self.points[self.jz +dire*4][1]==mode*-1+3 and self.points[self.jz +dire*-1][1]==mode*-1+3:
+                            pppp=0
+
+
+                        ppp+=pppp
+
+                    self.border_clear()
+
+                    retli_a,retli_d=self.count_one_more()
+                    if len(retli_a)>=2:
+                        ppp+=len(retli_a)*30000
+                    if len(retli_d)>=2:
+                        ppp-=len(retli_d)*20000
+
+                    points[1]=0
+
+                if threat_three>=2:
+                    ppp+=threat_three*50000*atad
+
+
+
+
+
+
+            pplist.append(ppp)
+
+
+
+
+        self.border_clear()
+        if max(pplist)==0:
+            pplist[len(pplist)//2]=1
+        print(max(pplist))
+
+        ##max(pplist))
+        loc_of_max_pp_inpplist=pplist.index(max(pplist))
+        ##loc_of_max_pp_inpplist)
+        points=self.points[loc_of_max_pp_inpplist]
+
+
+        zz = str(points)
+        sss = eval(zz)
+        self.draws.append(sss)
+
+
+        p = [self.screen,[225,235,240],[points[0][0],points[0][1]],self.seed_size,0]
+
+        points[-1] = 2
+
+
+
+
+
+        self.point_list.append(p)
+
+        self.draw_seed()
+        if loaded_sound:
+
+            pygame.mixer.music.play()
+
+        self.re.append(points)
+
+        self.judge()
+
+
+
+
+    def withdraw_(self):
+
+        if len(self.point_list)>1:
+            self.draws = self.draws[:]
+
+            self.index = self.points.index(self.re[-1])
+            self.index_2 = self.points.index(self.re[-2])
+            self.points.remove(self.points[self.index])
+            self.points.insert(self.index,self.draws[-1])
+            self.points.remove(self.points[self.index_2])
+            self.points.insert(self.index_2,self.draws[-2])
+            self.re.remove(self.re[-1])
+            self.re.remove(self.re[-1])
+            self.draws.remove(self.draws[-1])
+            self.draws.remove(self.draws[-1])
+
+
+
+            self.point_list.remove(self.point_list[-1])
+            self.point_list.remove(self.point_list[-1])
+            self.screen.fill([218,165,32])
+            self.baord = pygame.draw.rect(self.screen,[255,222,173],self.baord_rect,100)
+            self.draw_lines()
+            self.draw_seed()
+
+        #else:
+        #    if len(self.point_list)==1:
+        #        showinfo(title='info',message='why do you withdraw the only seed?\nwe need it to continue the game')
+        #    else:
+        #        showinfo(title='info',message='how can you withdraw the chess board!')
+
+    def judge(self):
+
+
+        for mode in [1,2]:
+
+            self.jz = -1
+            for points in self.points:
+                self.jz +=1
+                if points[1]==mode:
+
+                    for dire in self.directions_:
+                        if self.points[self.jz+dire][1]==mode and abs(self.points[self.jz][0][0]-self.points[self.jz+dire][0][0])<=32:
+
+                            if self.points[self.jz+dire*2][1]==mode and abs(self.points[self.jz+dire][0][0]-self.points[self.jz+dire*2][0][0])<=32:
+
+                                if self.points[self.jz+dire*3][1]==mode and abs(self.points[self.jz+dire*2][0][0]-self.points[self.jz+dire*3][0][0])<=32:
+
+                                    if self.points[self.jz+dire*4][1]==mode and abs(self.points[self.jz+dire*3][0][0]-self.points[self.jz+dire*4][0][0])<=32:
+
+                                        self.point_list.append([self.screen,self.win_color,[points[0][0],points[0][1]],9,0])
+                                        self.point_list.append([self.screen,self.win_color,[self.points[self.jz+dire][0][0],self.points[self.jz+dire][0][1]],9,0])
+                                        self.point_list.append([self.screen,self.win_color,[self.points[self.jz+dire*2][0][0],self.points[self.jz+dire*2][0][1]],9,0])
+                                        self.point_list.append([self.screen,self.win_color,[self.points[self.jz+dire*3][0][0],self.points[self.jz+dire*3][0][1]],9,0])
+                                        self.point_list.append([self.screen,self.win_color,[self.points[self.jz+dire*4][0][0],self.points[self.jz+dire*4][0][1]],9,0])
+                                        self.draw_seed()
+                                        if mode==2:
+                                            self.dec_w='white win'
+                                        else:
+                                            self.dec_w='black win'
+
+                                        self.enclose()
+                                        self.withdraw = False
+
+    def enclose(self):
+        #'did')
+        font = pygame.font.Font(None,60)
+        font1 = pygame.font.Font(None,40)
+        if self.dec_w=='white win':
+            text = font.render(self.dec_w,True,(225,235,240))
+        else:
+            text=font.render(self.dec_w,True,(50,50,50))
+        text1 = font1.render('save',True,(225,235,240))
+        self.screen.blit(text,(self.screen_w/2-75,50))
+        self.saveex=True
+        pygame.draw.rect(self.screen,[227,249,32],[self.save_button_pos_and_size[0]-2,self.save_button_pos_and_size[1]-2,self.save_button_pos_and_size[2]+4,self.save_button_pos_and_size[3]+4],0)
+        pygame.draw.rect(self.screen,[249,126,32],self.save_button_pos_and_size,0)
+        self.screen.blit(text1,(self.save_button_pos_and_size[0],self.save_button_pos_and_size[1]+5))
+
+
+
+
+x=Five()
+while x.a:
+    x.run_()
+
+
