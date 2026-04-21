@@ -1,0 +1,2 @@
+This is the old version that I presented as gift. The ai's mind is trapped in local optimum because it can only count the step for which it is now going.
+If you are a poor chess player, press 'backspace' to withdraw. If you are a talented chess player,press 'save' after you win the game and paste the record in your issues to proof that your ability (maybe I would use the records to train a smarter ai someday).
